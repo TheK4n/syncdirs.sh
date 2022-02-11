@@ -25,6 +25,10 @@ cmd_init() {
     echo $1 > "$GPG_ID"
 }
 
+rsync_all() {
+    rsync -ra "$BACKUP_DIR_1"/* "$BACKUP_DIR_2" && rsync -ra "$BACKUP_DIR_2"/* "$BACKUP_DIR_1"
+}
+
 cmd_insert() {
 
     [[ "${1:0:1}" == [/~.] ]] && die "you cant use absolute path"
@@ -45,7 +49,7 @@ cmd_insert() {
         tar czf - "$1" | gpg -e -R "$(cat $GPG_ID)" > "$enc_file_name"
     fi
 
-    cp -R $(dirname "$enc_file_name") "$BACKUP_DIR_2"
+    rsync_all
 }
 
 cmd_delete() {
@@ -108,6 +112,7 @@ case "$1" in
 	find|search) shift;		    cmd_find    "$@" ;;
 	grep) shift;			    cmd_grep    "$@" ;;
 	insert|add) shift;		    cmd_insert  "$@" ;;
+    sync) shift;                rsync_all   "$@" ;;
     restore) shift;             cmd_restore "$@" ;;
 	delete|rm|remove) shift;	cmd_delete  "$@" ;;
 	du) shift;	                cmd_diskusage  "$@" ;;
