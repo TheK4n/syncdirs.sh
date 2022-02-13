@@ -13,9 +13,14 @@ die() {
 }
 
 cmd_init() {
+
+    test -z "$(gpg -k | grep "$1")" && die "No public key $1"
+    test -z "$(gpg -K | grep "$1")" && die "No private key $1"
+
+
     mkdir -p "$BACKUP_DIR"/1 || true
     ln -s $MEDIA_BACKUP "$BACKUP_DIR_2" || die "not mounted $MEDIA_BACKUP"
-    echo $1 > "$GPG_ID"
+    echo "$1" > "$GPG_ID"
 }
 
 rsync_all() {
