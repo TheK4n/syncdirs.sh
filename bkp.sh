@@ -12,13 +12,6 @@ die() {
 	exit 1
 }
 
-yesno() {
-	[[ -t 0 ]] || return 0
-	local response
-	read -r -p "$1 [y/N] " response
-	[[ $response == [yY] ]] || exit 1
-}
-
 cmd_init() {
     mkdir -p "$BACKUP_DIR"/1 || true
     ln -s $MEDIA_BACKUP "$BACKUP_DIR_2" || die "not mounted $MEDIA_BACKUP"
