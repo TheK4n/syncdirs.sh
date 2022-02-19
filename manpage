@@ -1,0 +1,73 @@
+.\" Manpage for bkp.
+.TH man 1 "20 Feb 2022" "1.0" "bkp man page"
+.SH NAME
+bkp \- Backup manager with 3-2-1 rule
+.SH SYNOPSIS
+bkp COMMAND [ARG]
+.SH DESCRIPTION
+CLI Backup manager using rule 3-2-1 and GPG
+
+Advice: use ~/.backup/2 as symbolic link to raid-1 and ~/.backup/3 as sshfs
+
+.SH COMMANDS
+.PP
+\fBinit (gpg-id)\fR
+.RS 4
+Creates dirs ~/.backup/1
+.RE
+.PP
+\fBinsert|add (file)\fR
+.RS 4
+Copy file as ~/.backup/{1..}/<filename>/<curdate>/<curtime> and encrypts it with public key
+.RE
+.PP
+\fBshow|ls|list\fR
+.RS 4
+Shows tree of ~/.backup
+.RE
+.PP
+\fBsync\fR
+.RS 4
+Synchronize files in ~/.backup/{1..} by rsync
+.RE
+.PP
+\fBrestore (file)\fR
+.RS 4
+Decrypts file with private key and put it in work directory
+.RE
+.PP
+\fBrm|delete|remove (path)\fR
+.RS 4
+Deletes file or directory from ~/.backup/{1..}
+.RE
+.PP
+\fBdu [path]\fR
+.RS 4
+Shows size
+.RE
+.PP
+\fBreg|register (file)\fR
+.RS 4
+Register full path to file in ~/.backup/backup.conf
+.RE
+.PP
+\fBcron\fR
+.RS 4
+Executes command 'add' for each registered file
+.RE
+.PP
+\fBregistered\fR
+.RS 4
+Shows registered files (~/.backup/backup.conf)
+.RE
+.PP
+\fBregedit\fR
+.RS 4
+Opens ~/.backup/backup.conf by $EDITOR
+.RE
+.PP
+.SH DEPENDENCIES
+gpg, rsync
+.SH AUTHOR
+Kan (thek4n@yandex.ru)
+https://github.com/thek4n
