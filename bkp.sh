@@ -82,9 +82,13 @@ _get_last_file_by_time() {
 
 cmd_restore() {
     file_name="$(basename "$1")"
+
+    # get last saved file by time
     last_sub_dir="$(ls -t "$BACKUP_DIR_1"/"$file_name" | head -n 1)"
     last_file="$BACKUP_DIR_1"/"$file_name"/"$last_sub_dir"/"$(ls -t "$BACKUP_DIR_1"/"$file_name"/"$last_sub_dir" | head -n 1)"
-    test -e "$last_file" && gpg -d "$last_file" > "$file_name"
+
+    # restore last saved file
+    test -e "$last_file" && gpg -d -o "$file_name" "$last_file"
 }
 
 cmd_diskusage() {
@@ -96,6 +100,8 @@ cmd_register() {
     if [ -f "$1" ]; then
         realpath "$1" >> "$BACKUP_FILE"
         log_msg "Register '$(realpath "$1")'"
+        sort "$BACKUP_FILE" | uniq > "$BACKUP_DIR"/._tmp  # delete duplicates
+        cat "$BACKUP_DIR"/._tmp > "$BACKUP_FILE"
     else
         log_error "'$1' not a file"
     fi
@@ -106,11 +112,11 @@ cmd_registered() {
 }
 
 cmd_cron() {
-    for i in $(cat "$BACKUP_FILE" | tr '\n' ' ');
+    for i in $(tr '\n' ' ' < "$BACKUP_FILE");
     do
         if [ -f "$i" ] 
         then
-            cmd_insert "$i"
+            cmd_insert "$i" > /dev/null
             log_msg "Backup '$i'"
         else
             log_error "'$i' not exists"
