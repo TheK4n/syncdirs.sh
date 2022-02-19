@@ -151,21 +151,21 @@ cmd_log() {
 
 
 case "$1" in
-    init) shift;			          cmd_init    "$@" ;;
-    #help|--help) shift;		     cmd_usage   "$@" ;;
-    #version|--version) shift;	 cmd_version "$@" ;;
-    show|ls|list) shift;		    cmd_show    "$@" ;;
-    insert|add) shift;		      cmd_insert  "$@" ;;
-    sync) shift;                cmd_rsync_all   "$@" ;;
-    restore) shift;             cmd_restore "$@" ;;
-    delete|rm|remove) shift;   	cmd_delete  "$@" ;;
-    du) shift;	                cmd_diskusage  "$@" ;;
-    register|reg) shift;        cmd_register "$@" ;;
-    registered) shift;          cmd_registered "$@" ;;
-    regedit) shift;             cmd_regedit "$@" ;;
-    cron) shift;                cmd_cron     "$@" ;;
-    log) shift;                 cmd_log      "$@" ;;
+    init) shift;               cmd_init    "$@" ;;
+    #help|--help) shift;        cmd_usage   "$@" ;;
+    #version|--version) shift;  cmd_version "$@" ;;
+    show|ls|list) shift;       cmd_show    "$@" ;;
+    insert|add) shift;         cmd_insert  "$@" ;;
+    sync) shift;               cmd_rsync_all   "$@" ;;
+    restore) shift;            cmd_restore "$@" ;;
+    delete|rm|remove) shift;   cmd_delete  "$@" ;;
+    du) shift;                 cmd_diskusage  "$@" ;;
+    register|reg) shift;       cmd_register "$@" ;;
+    registered) shift;         cmd_registered "$@" ;;
+    regedit) shift;            cmd_regedit "$@" ;;
+    cron) shift;               cmd_cron     "$@" ;;
+    log) shift;                cmd_log      "$@" ;;
 
-    *)				                  cmd_show    "$@" ;;
+    *)				                 cmd_show    "$@" ;;
 esac
 exit 0
