@@ -166,6 +166,6 @@ case "$1" in
     cron) shift;               cmd_cron     "$@" ;;
     log) shift;                cmd_log      "$@" ;;
 
-    *)				                 cmd_show    "$@" ;;
+    *)                         cmd_show    "$@" ;;
 esac
 exit 0
