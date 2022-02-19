@@ -11,8 +11,15 @@ SCRIPT_NAME="$(basename "$0")"
 
 
 die() {
-	echo "$SCRIPT_NAME: Error: $1" >&2
-	exit 1
+    echo "$SCRIPT_NAME: Error: $1" >&2
+    exit 1
+}
+
+yesno() {
+	[[ -t 0 ]] || return 0
+	local response
+	read -r -p "$1 [y/N] " response
+	[[ $response == [yY] ]] || exit 1
 }
 
 log_msg() {
@@ -74,6 +81,7 @@ delete_if_exists() {
 }
 
 cmd_delete() {
+    yesno "Remove '$1'?"
     for i in $(get_filesystems)
     do
         _file="$i"/"$1"
@@ -87,6 +95,7 @@ cmd_show() {
 }
 
 cmd_restore() {
+    test -e "$1" && die "'$1' exists in current directory"
     file_name="$(basename "$1")"
 
     # get last saved file by time
