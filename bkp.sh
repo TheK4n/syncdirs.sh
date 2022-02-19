@@ -91,7 +91,7 @@ cmd_delete() {
 
 cmd_show() {
     echo "Backup"
-    tree "$BACKUP_DIR_1" | tail -n +2 | head -n -2  # tree exclude first and last lines
+    tree -L 1 "$BACKUP_DIR_1" | tail -n +2 | head -n -2  # tree exclude first and last lines
 }
 
 cmd_restore() {
