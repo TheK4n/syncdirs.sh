@@ -41,21 +41,34 @@ cmd_rsync_all() {
 }
 
 cmd_insert() {
-
+    test -e "$1" || die "not exists"
     test -d "$1" && die "only files, not directory"
 
-    test -f "$BACKUP_DIR_1/$(basename "$1")" && die "'$(basename "$1")' already exists"
+    _path="$BACKUP_DIR_1/$(basename "$1")/$(date +"%d-%m-%y")"
+    file_name="$_path/$(date +"%H:%M:%S")"
 
-    file_name="$(basename "$1")"
-    gpg -e -R "$(cat "$GPG_ID")" -o "$BACKUP_DIR_1"/"$file_name" "$1"
+    test -f "$file_name" && die "'$(basename "$1")' already exists"
+
+    mkdir -pv "$_path"
+    gpg -e -R "$(cat "$GPG_ID")" -o "$file_name" "$1"
     cmd_rsync_all
 }
 
+delete_if_exists() {
+    if [ -d "$1" ]; then
+        rm -r "$1"
+    elif [ -f "$1" ]; then
+        rm "$1"
+    else
+        return 1
+    fi
+}
+
 cmd_delete() {
-    file_name="$(basename "$1")"
-    rm "$BACKUP_DIR_1"/"$file_name"
-    rm "$BACKUP_DIR_2"/"$file_name" && \
-    echo "$SCRIPT_NAME: '$BACKUP_DIR_1/$file_name' Removed"
+    _path="$BACKUP_DIR_1"/"$1"
+    _path2="$BACKUP_DIR_2"/"$1"
+    delete_if_exists "$_path" && echo "$SCRIPT_NAME: '$_path' Removed"
+    delete_if_exists "$_path2" && echo "$SCRIPT_NAME: '$_path2' Removed"
 }
 
 cmd_show() {
@@ -63,9 +76,15 @@ cmd_show() {
     tree "$BACKUP_DIR_1" | tail -n +2
 }
 
+_get_last_file_by_time() {
+    true
+}
+
 cmd_restore() {
-    file_name=$(basename "$1")
-    test -e "$BACKUP_DIR_1"/"$1" && gpg -d "$BACKUP_DIR_1"/"$1" > "$file_name"
+    file_name="$(basename "$1")"
+    last_sub_dir="$(ls -t "$BACKUP_DIR_1"/"$file_name" | head -n 1)"
+    last_file="$BACKUP_DIR_1"/"$file_name"/"$last_sub_dir"/"$(ls -t "$BACKUP_DIR_1"/"$file_name"/"$last_sub_dir" | head -n 1)"
+    test -e "$last_file" && gpg -d "$last_file" > "$file_name"
 }
 
 cmd_diskusage() {
@@ -104,7 +123,7 @@ cmd_regedit() {
 }
 
 cmd_log() {
-    less "$LOG_FILE"
+    cat "$LOG_FILE"
 }
 
 
