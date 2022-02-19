@@ -1,8 +1,7 @@
+#!/usr/bin/env bash
 
 BACKUP_DIR="$HOME"/.backup
-BACKUP_DIR_1="$BACKUP_DIR"/1
-BACKUP_DIR_2="$BACKUP_DIR"/2
-MEDIA_BACKUP="/media/backup"
+BACKUP_DIR_1="$BACKUP_DIR"/1  # local file system
 GPG_ID="$BACKUP_DIR"/.gpg-id
 
 BACKUP_FILE="$BACKUP_DIR/backup.conf"
@@ -21,7 +20,11 @@ log_msg() {
 }
 
 log_error() {
-    log_msg ": Error: $1"
+    log_msg "Error: $1"
+}
+
+get_filesystems() {
+    find -L "$BACKUP_DIR" -maxdepth 1 -type d | grep -vE "^$BACKUP_DIR$" | sort
 }
 
 cmd_init() {
@@ -32,12 +35,18 @@ cmd_init() {
     mkdir -p "$BACKUP_DIR"/1 || true
     touch "$LOG_FILE"
     touch "$BACKUP_FILE"
-    ln -s $MEDIA_BACKUP "$BACKUP_DIR_2" || die "not mounted '$MEDIA_BACKUP'"
     echo "$1" > "$GPG_ID"
 }
 
+rsync_with() {
+    rsync -ra "$BACKUP_DIR_1"/* "$1" && rsync -ra "$1"/* "$BACKUP_DIR_1"
+}
+
 cmd_rsync_all() {
-    rsync -ra "$BACKUP_DIR_1"/* "$BACKUP_DIR_2" && rsync -ra "$BACKUP_DIR_2"/* "$BACKUP_DIR_1"
+    for i in $(get_filesystems)
+    do
+        rsync_with "$i"
+    done
 }
 
 cmd_insert() {
@@ -65,19 +74,16 @@ delete_if_exists() {
 }
 
 cmd_delete() {
-    _path="$BACKUP_DIR_1"/"$1"
-    _path2="$BACKUP_DIR_2"/"$1"
-    delete_if_exists "$_path" && echo "$SCRIPT_NAME: '$_path' Removed"
-    delete_if_exists "$_path2" && echo "$SCRIPT_NAME: '$_path2' Removed"
+    for i in $(get_filesystems)
+    do
+        _file="$i"/"$1"
+        delete_if_exists "$_file" && echo "$SCRIPT_NAME: '$_file' Removed"
+    done
 }
 
 cmd_show() {
     echo "Backup"
-    tree "$BACKUP_DIR_1" | tail -n +2
-}
-
-_get_last_file_by_time() {
-    true
+    tree "$BACKUP_DIR_1" | tail -n +2 | head -n -2  # tree exclude first and last lines
 }
 
 cmd_restore() {
@@ -92,16 +98,18 @@ cmd_restore() {
 }
 
 cmd_diskusage() {
-    du -hs "$BACKUP_DIR_1"/"$1"
-    du -hs "$BACKUP_DIR_2"/"$1"
+    for i in $(get_filesystems)
+    do
+        du -hs "$i"/"$1"
+    done
 }
 
 cmd_register() {
     if [ -f "$1" ]; then
         realpath "$1" >> "$BACKUP_FILE"
         log_msg "Register '$(realpath "$1")'"
-        sort "$BACKUP_FILE" | uniq > "$BACKUP_DIR"/._tmp  # delete duplicates
-        cat "$BACKUP_DIR"/._tmp > "$BACKUP_FILE"
+        sort "$BACKUP_FILE" | uniq > "$BACKUP_DIR"/.tmp  # delete duplicates
+        cat "$BACKUP_DIR"/.tmp > "$BACKUP_FILE"
     else
         log_error "'$1' not a file"
     fi
@@ -138,8 +146,6 @@ case "$1" in
 	#help|--help) shift;		     cmd_usage   "$@" ;;
 	#version|--version) shift;	 cmd_version "$@" ;;
 	show|ls|list) shift;		    cmd_show    "$@" ;;
-	#find|search) shift;		     cmd_find    "$@" ;;
-	#grep) shift;			           cmd_grep    "$@" ;;
 	insert|add) shift;		      cmd_insert  "$@" ;;
   sync) shift;                cmd_rsync_all   "$@" ;;
   restore) shift;             cmd_restore "$@" ;;
