@@ -66,6 +66,11 @@ Shows registered files (~/.backup/backup.conf)
 Opens ~/.backup/backup.conf by $EDITOR
 .RE
 .PP
+\fBinspect [file]\fR
+.RS 4
+<filename> <size> <amount>
+.RE
+.PP
 .SH DEPENDENCIES
 gpg, rsync
 .SH AUTHOR

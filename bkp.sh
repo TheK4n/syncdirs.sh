@@ -149,6 +149,12 @@ cmd_log() {
     cat "$LOG_FILE"
 }
 
+cmd_inspect() {
+    file_name="$BACKUP_DIR_1/$1"
+    test -e "$file_name"
+    echo "$1 $(du -hs "$file_name" | head -n 1 | awk '{printf $1}') $(ls "$file_name" | wc -l)"
+}
+
 
 case "$1" in
     init) shift;               cmd_init    "$@" ;;
@@ -165,6 +171,7 @@ case "$1" in
     regedit) shift;            cmd_regedit "$@" ;;
     cron) shift;               cmd_cron     "$@" ;;
     log) shift;                cmd_log      "$@" ;;
+    inspect) shift;            cmd_inspect  "$@" ;;
 
     *)                         cmd_show    "$@" ;;
 esac
