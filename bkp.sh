@@ -155,10 +155,33 @@ cmd_inspect() {
     echo "$1 $(du -hs "$file_name" | head -n 1 | awk '{printf $1}') $(ls "$file_name" | wc -l)"
 }
 
+cmd_usage() {
+	echo
+	cat <<-_EOF
+	Usage:
+        init: initialize
+        insert|add: add files to backup
+        show|ls|list: show all files
+        sync: syncronize files
+        restore: copy file to workdir
+        rm|delete|remove: delete file from backup
+        du: disk usage
+        reg: register file to backup by cron
+        cron: copy all files registered
+	_EOF
+}
+
+cmd_extension_or_show() {
+    if [ -z "$1" ]; then
+        cmd_show "$@"
+    else
+        cmd_usage
+    fi
+}
 
 case "$1" in
     init) shift;               cmd_init    "$@" ;;
-    #help|--help) shift;        cmd_usage   "$@" ;;
+    help|--help) shift;        cmd_usage   "$@" ;;
     #version|--version) shift;  cmd_version "$@" ;;
     show|ls|list) shift;       cmd_show    "$@" ;;
     insert|add) shift;         cmd_insert  "$@" ;;
@@ -173,6 +196,6 @@ case "$1" in
     log) shift;                cmd_log      "$@" ;;
     inspect) shift;            cmd_inspect  "$@" ;;
 
-    *)                         cmd_show    "$@" ;;
+    *)                         cmd_extension_or_show    "$@" ;;
 esac
 exit 0
