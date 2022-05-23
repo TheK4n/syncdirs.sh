@@ -90,8 +90,13 @@ cmd_delete() {
 }
 
 cmd_show() {
+    test -z $1 && LEVEL=1 || LEVEL=$1
+    test $LEVEL -gt 0 2>/dev/null || die "Level must be positive integer"
+    test $LEVEL -gt 3 && die "Max level 3"
+
+
     echo "Backup"
-    tree -L 1 "$BACKUP_DIR_1" | tail -n +2 | head -n -2  # tree exclude first and last lines
+    tree -L $LEVEL "$BACKUP_DIR_1" | tail -n +2 | head -n -2  # tree exclude first and last lines
 }
 
 cmd_restore() {
@@ -196,6 +201,6 @@ case "$1" in
     log) shift;                cmd_log      "$@" ;;
     inspect) shift;            cmd_inspect  "$@" ;;
 
-    *)                         cmd_extension_or_show    "$@" ;;
+    *)                         cmd_show    "$@" ;;
 esac
 exit 0
