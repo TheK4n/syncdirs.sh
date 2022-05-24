@@ -66,7 +66,7 @@ cmd_insert() {
     test -f "$file_name" && die "'$(basename "$1")' already exists"
 
     mkdir -pv "$_path"
-    gpg -e -R "$(cat "$GPG_ID")" -o "$file_name" "$1"
+    gpg -e -u "$(cat "$GPG_ID")" -R "$(cat "$GPG_ID")" -o "$file_name" "$1"
     cmd_rsync_all
 }
 
