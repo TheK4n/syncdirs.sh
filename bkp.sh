@@ -90,13 +90,15 @@ cmd_delete() {
 }
 
 cmd_show() {
-    test -z $1 && LEVEL=1 || LEVEL=$1
-    test $LEVEL -gt 0 2>/dev/null || die "Level must be positive integer"
-    test $LEVEL -gt 3 && die "Max level 3"
 
+    test -n "$1" && __FILE="$1"
+
+    test -z "$2" && LEVEL=1 || LEVEL="$2"
+    test "$LEVEL" -lt 0 2>/dev/null && die "Level must be positive integer"
+    test "$LEVEL" -gt 3 2>/dev/null && die "Max level 3"
 
     echo "Backup"
-    tree -L $LEVEL "$BACKUP_DIR_1" | tail -n +2 | head -n -2  # tree exclude first and last lines
+    tree -L "$LEVEL" "$BACKUP_DIR_1/$__FILE" | tail -n +2 | head -n -2  # tree exclude first and last lines
 }
 
 cmd_restore() {
