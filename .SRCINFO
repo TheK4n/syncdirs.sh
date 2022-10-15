@@ -1,0 +1,16 @@
+pkgbase = bkp
+	pkgver = 0.1.1
+	pkgrel = 1
+	url = https://github.com/thek4n/bkp
+	arch = any
+	license = MIT
+	makedepends = git
+	depends = git
+	depends = gnupg
+	depends = rsync
+	depends = tree
+	conflicts = bkp
+	source = bkp::git+https://github.com/thek4n/bkp.git#branch=master
+	sha256sums = SKIP
+
+pkgname = bkp
