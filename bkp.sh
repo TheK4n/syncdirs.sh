@@ -2,7 +2,6 @@
 
 BACKUP_DIR="$HOME"/.backup
 BACKUP_DIR_1="$BACKUP_DIR"/1  # local file system
-GPG_ID="$BACKUP_DIR"/.gpg-id
 
 BACKUP_FILE="$BACKUP_DIR/backup.conf"
 LOG_FILE="$BACKUP_DIR/backup.log"
@@ -36,13 +35,9 @@ get_filesystems() {
 
 cmd_init() {
 
-    test -z "$(gpg -k | grep "$1")" && die "No public key '$1'"
-    test -z "$(gpg -K | grep "$1")" && die "No private key '$1'"
-
     mkdir -p "$BACKUP_DIR"/1 || true
     touch "$LOG_FILE"
     touch "$BACKUP_FILE"
-    echo "$1" > "$GPG_ID"
 }
 
 rsync_with() {
@@ -66,7 +61,7 @@ cmd_insert() {
     test -f "$file_name" && die "'$(basename "$1")' already exists"
 
     mkdir -pv "$_path"
-    gpg -e -u "$(cat "$GPG_ID")" -R "$(cat "$GPG_ID")" -o "$file_name" "$1"
+    gpg -c -o "$file_name" "$1"
     cmd_rsync_all
 }
 
@@ -167,11 +162,11 @@ cmd_usage() {
 	cat <<-_EOF
 	Usage:
         init: initialize
-        insert|add: add files to backup
-        show|ls|list: show all files
+        add: add files to backup
+        ls: show all files
         sync: syncronize files
         restore: copy file to workdir
-        rm|delete|remove: delete file from backup
+        rm: delete file from backup
         du: disk usage
         reg: register file to backup by cron
         cron: copy all files registered
@@ -190,13 +185,13 @@ case "$1" in
     init) shift;               cmd_init    "$@" ;;
     help|--help) shift;        cmd_usage   "$@" ;;
     #version|--version) shift;  cmd_version "$@" ;;
-    show|ls|list) shift;       cmd_show    "$@" ;;
-    insert|add) shift;         cmd_insert  "$@" ;;
+    ls) shift;       cmd_show    "$@" ;;
+    add) shift;         cmd_insert  "$@" ;;
     sync) shift;               cmd_rsync_all   "$@" ;;
     restore) shift;            cmd_restore "$@" ;;
-    delete|rm|remove) shift;   cmd_delete  "$@" ;;
+    rm) shift;   cmd_delete  "$@" ;;
     du) shift;                 cmd_diskusage  "$@" ;;
-    register|reg) shift;       cmd_register "$@" ;;
+    reg) shift;       cmd_register "$@" ;;
     registered) shift;         cmd_registered "$@" ;;
     regedit) shift;            cmd_regedit "$@" ;;
     cron) shift;               cmd_cron     "$@" ;;

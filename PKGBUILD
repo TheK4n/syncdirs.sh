@@ -1,13 +1,12 @@
 # Maintainer: thek4n
 
 pkgname='bkp'
-pkgver=0.1.1
+pkgver=0.2.1
 pkgrel=1
 pkgdesc=""
 arch=('any')
 license=('MIT')
 depends=(
-  'git'
   'gnupg'
   'rsync'
   'tree'
