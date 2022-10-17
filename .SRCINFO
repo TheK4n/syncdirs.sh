@@ -9,7 +9,7 @@ pkgbase = bkp
 	depends = rsync
 	depends = tree
 	conflicts = bkp
-	source = bkp::git+https://github.com/thek4n/bkp.git#branch=aes
+	source = bkp::git+https://github.com/thek4n/bkp.git#branch=master
 	sha256sums = SKIP
 
 pkgname = bkp
