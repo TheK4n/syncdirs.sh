@@ -12,6 +12,7 @@ readonly CONFIGFILE="${CONFIGFILE:=$DEFAULT_CONFIGFILE}"
 readonly EXIT_SUCCESS=0
 readonly EXIT_FAILURE=1
 
+
 die() {
     local program_name
     program_name="$(basename "$0")"
@@ -61,10 +62,9 @@ check_config() {
 
 sync_root_with() {
     rsync -ra "$ROOT_BACKUP_DIRECTORY"/* "$ROOT_BACKUP_DIRECTORY"/.* "$1"
-    echo "Synced root directory with '$1'"
 }
 
-_validate_directory() {
+_is_valid_directory() {
     _is_directory "$1" && _directory_writable "$1"
 }
 
@@ -76,7 +76,7 @@ cmd_sync_all() {
 
     for i in $(get_backup_dirs)
     do
-        if ! _validate_directory "$i"; then
+        if ! _is_valid_directory "$i"; then
             if $skip_missing; then
                 continue
             else
@@ -85,6 +85,7 @@ cmd_sync_all() {
         fi
 
         sync_root_with "$i"
+        echo "Synced root directory with '$i'"
     done
 }
 
