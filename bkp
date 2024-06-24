@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+
 set -ueo pipefail
 shopt -s nullglob
 
@@ -20,7 +21,7 @@ die() {
 
 check_configfile() {
     if [ ! -r "$CONFIGFILE" ]; then
-        die "CONFIGFILE(=$CONFIGFILE) not found" 1
+        die "CONFIGFILE(=$CONFIGFILE) not found" $EXIT_FAILURE
     fi
 }
 
@@ -44,42 +45,45 @@ get_backup_dirs() {
     echo "${BACKUP_DIRECTORIES[*]}"
 }
 
-_check_backup_dirs() {
-    local backup_dir
-    for backup_dir in $(get_backup_dirs)
-    do
-        if ! _is_directory "$backup_dir"; then
-            die "Config is invalid: '$backup_dir' is not a directory" 1
-        fi
-        if ! _directory_writable "$backup_dir"; then
-            die "Config is invalid: '$backup_dir' is not writable" 1
-        fi
-    done
-}
-
 check_config() {
     if ! _is_variable_set "ROOT_BACKUP_DIRECTORY"; then
-        die "Config is invalid: variable ROOT_BACKUP_DIRECTORY not set" 1
+        die "Config is invalid: variable ROOT_BACKUP_DIRECTORY not set" $EXIT_FAILURE
     fi
 
     if ! _is_variable_set "BACKUP_DIRECTORIES"; then
-        die "Config is invalid: variable BACKUP_DIRECTORIES not set" 1
+        die "Config is invalid: variable BACKUP_DIRECTORIES not set" $EXIT_FAILURE
     fi
 
     if ! _is_directory "$ROOT_BACKUP_DIRECTORY"; then
-        die "Config is invalid: ROOT_BACKUP_DIRECTORY(=$ROOT_BACKUP_DIRECTORY) is not a directory" 1
+        die "Config is invalid: ROOT_BACKUP_DIRECTORY(=$ROOT_BACKUP_DIRECTORY) is not a directory" $EXIT_FAILURE
     fi
-
-    _check_backup_dirs
 }
 
 sync_root_with() {
     rsync -ra "$ROOT_BACKUP_DIRECTORY"/* "$ROOT_BACKUP_DIRECTORY"/.* "$1"
+    echo "Synced root directory with '$1'"
+}
+
+_validate_directory() {
+    _is_directory "$1" && _directory_writable "$1"
 }
 
 cmd_sync_all() {
+    local skip_missing=false
+    if [ "${1:-}" = "--skip-missing" ] || [ "${1:-}" = "-s" ]; then
+        skip_missing=true
+    fi
+
     for i in $(get_backup_dirs)
     do
+        if ! _validate_directory "$i"; then
+            if $skip_missing; then
+                continue
+            else
+                die "Invalid dir '$i'"
+            fi
+        fi
+
         sync_root_with "$i"
     done
 }
@@ -89,10 +93,13 @@ check_configfile
 load_config
 check_config
 
+if [[ ! -v 1 ]]; then
+    die "No command specified" $EXIT_FAILURE
+fi
 
 case "$1" in
-    sync) shift;  cmd_sync_all ;;
+    sync) shift;  cmd_sync_all "$@"  ;;
 
-    *)            die "No command specified" 0    ;;
+    *)            die "'$1' is not a bkp command" $EXIT_FAILURE  ;;
 esac
 exit $EXIT_SUCCESS
