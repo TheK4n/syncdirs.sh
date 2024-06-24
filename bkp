@@ -70,7 +70,8 @@ _is_valid_directory() {
 
 cmd_sync_all() {
     local skip_missing=false
-    if [ "${1:-}" = "--skip-missing" ] || [ "${1:-}" = "-s" ]; then
+
+    if [[ " $* " =~ " --skip-missing " ]] || [[ " $* " =~ " -s " ]]; then
         skip_missing=true
     fi
 
@@ -94,7 +95,7 @@ check_configfile
 load_config
 check_config
 
-if [[ ! -v 1 ]]; then
+if ! _is_variable_set 1; then
     die "No command specified" $EXIT_FAILURE
 fi
 
