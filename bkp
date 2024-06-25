@@ -61,7 +61,8 @@ check_config() {
 }
 
 sync_root_with() {
-    rsync -avu --delete "$ROOT_BACKUP_DIRECTORY/" "$1"
+    # rsync -avu --delete "$ROOT_BACKUP_DIRECTORY/" "$1"
+    rsync -avu "$ROOT_BACKUP_DIRECTORY/" "$1"
 }
 
 _is_valid_directory() {
