@@ -20,16 +20,6 @@ die() {
     exit "${2:-$EXIT_FAILURE}"
 }
 
-check_configfile() {
-    if [ ! -r "$CONFIGFILE" ]; then
-        die "CONFIGFILE(=$CONFIGFILE) not found" $EXIT_FAILURE
-    fi
-}
-
-load_config() {
-    source "$CONFIGFILE"
-}
-
 _is_variable_set() {
     [[ -v "$1" ]]
 }
@@ -38,8 +28,30 @@ _is_directory() {
     [[ -d "$1" ]]
 }
 
-_directory_writable() {
+_is_readable() {
+    [[ -r "$1" ]]
+}
+
+_is_writable() {
     [[ -w "$1" ]]
+}
+
+_is_readable_directory() {
+    _is_directory "$1" && _is_readable "$1"
+}
+
+_is_writable_directory() {
+    _is_directory "$1" && _is_writable "$1"
+}
+
+check_configfile() {
+    if ! _is_readable "$CONFIGFILE"; then
+        die "CONFIGFILE(=$CONFIGFILE) not found or not readable" $EXIT_FAILURE
+    fi
+}
+
+load_config() {
+    source "$CONFIGFILE"
 }
 
 get_backup_dirs() {
@@ -48,16 +60,26 @@ get_backup_dirs() {
 
 check_config() {
     if ! _is_variable_set "ROOT_BACKUP_DIRECTORY"; then
-        die "Config is invalid: variable ROOT_BACKUP_DIRECTORY not set" $EXIT_FAILURE
+        die "Config is invalid: variable ROOT_BACKUP_DIRECTORY not defined" $EXIT_FAILURE
     fi
 
     if ! _is_variable_set "BACKUP_DIRECTORIES"; then
-        die "Config is invalid: variable BACKUP_DIRECTORIES not set" $EXIT_FAILURE
+        die "Config is invalid: variable BACKUP_DIRECTORIES not defined" $EXIT_FAILURE
     fi
 
-    if ! _is_directory "$ROOT_BACKUP_DIRECTORY"; then
-        die "Config is invalid: ROOT_BACKUP_DIRECTORY(=$ROOT_BACKUP_DIRECTORY) is not a directory" $EXIT_FAILURE
+    if ! _is_readable_directory "$ROOT_BACKUP_DIRECTORY"; then
+        die "Config is invalid: ROOT_BACKUP_DIRECTORY(=$ROOT_BACKUP_DIRECTORY) is not a readable directory" $EXIT_FAILURE
     fi
+}
+
+_check_backup_dirs() {
+    local backup_dir
+    for backup_dir in $(get_backup_dirs)
+    do
+        if ! _is_writable_directory "$backup_dir"; then
+            die "Config is invalid: '$backup_dir' is not writable direcotry" 1
+        fi
+    done
 }
 
 sync_root_with() {
@@ -65,24 +87,20 @@ sync_root_with() {
     rsync -avu "$ROOT_BACKUP_DIRECTORY/" "$1"
 }
 
-_is_valid_directory() {
-    _is_directory "$1" && _directory_writable "$1"
-}
-
 cmd_sync_all() {
     local skip_missing=false
 
     if [[ " $* " =~ " --skip-missing " ]] || [[ " $* " =~ " -s " ]]; then
         skip_missing=true
+    else
+        _check_backup_dirs
     fi
 
     for i in $(get_backup_dirs)
     do
-        if ! _is_valid_directory "$i"; then
+        if ! _is_writable_directory "$i"; then
             if $skip_missing; then
                 continue
-            else
-                die "Invalid dir '$i'"
             fi
         fi
 
@@ -92,17 +110,14 @@ cmd_sync_all() {
 }
 
 
-check_configfile
-load_config
-check_config
+main() {
+    check_configfile
+    load_config
+    check_config
 
-if ! _is_variable_set 1; then
-    die "No command specified" $EXIT_FAILURE
-fi
+    cmd_sync_all "$@"
+}
 
-case "$1" in
-    sync) shift;  cmd_sync_all "$@"  ;;
+main "$@"
 
-    *)            die "'$1' is not a bkp command" $EXIT_FAILURE  ;;
-esac
 exit $EXIT_SUCCESS
