@@ -77,7 +77,7 @@ _check_backup_dirs() {
     for backup_dir in $(get_backup_dirs)
     do
         if ! _is_writable_directory "$backup_dir"; then
-            die "Config is invalid: '$backup_dir' is not writable direcotry" 1
+            die "Config is invalid: '$backup_dir' is not writable directory" $EXIT_FAILURE
         fi
     done
 }
