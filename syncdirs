@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+
+
+set -ueo pipefail
+shopt -s nullglob
+
+: "${XDG_CONFIG_HOME:=$HOME/.config}"
+readonly DEFAULT_CONFIGFILE="$XDG_CONFIG_HOME/bkp/config"
+
+readonly CONFIGFILE="${CONFIGFILE:=$DEFAULT_CONFIGFILE}"
+
+readonly EXIT_SUCCESS=0
+readonly EXIT_FAILURE=1
+
+
+die() {
+    local program_name
+    program_name="$(basename "$0")"
+    echo "$program_name: Error: $1" 1>&2
+    exit "${2:-$EXIT_FAILURE}"
+}
+
+_is_variable_set() {
+    [[ -v "$1" ]]
+}
+
+_is_directory() {
+    [[ -d "$1" ]]
+}
+
+_is_readable() {
+    [[ -r "$1" ]]
+}
+
+_is_writable() {
+    [[ -w "$1" ]]
+}
+
+_is_readable_directory() {
+    _is_directory "$1" && _is_readable "$1"
+}
+
+_is_writable_directory() {
+    _is_directory "$1" && _is_writable "$1"
+}
+
+check_configfile() {
+    if ! _is_readable "$CONFIGFILE"; then
+        die "CONFIGFILE(=$CONFIGFILE) not found or not readable" $EXIT_FAILURE
+    fi
+}
+
+load_config() {
+    source "$CONFIGFILE"
+}
+
+get_backup_dirs() {
+    echo "${BACKUP_DIRECTORIES[*]}"
+}
+
+check_config() {
+    if ! _is_variable_set "ROOT_BACKUP_DIRECTORY"; then
+        die "Config is invalid: variable ROOT_BACKUP_DIRECTORY not defined" $EXIT_FAILURE
+    fi
+
+    if ! _is_variable_set "BACKUP_DIRECTORIES"; then
+        die "Config is invalid: variable BACKUP_DIRECTORIES not defined" $EXIT_FAILURE
+    fi
+
+    if ! _is_readable_directory "$ROOT_BACKUP_DIRECTORY"; then
+        die "Config is invalid: ROOT_BACKUP_DIRECTORY(=$ROOT_BACKUP_DIRECTORY) is not a readable directory" $EXIT_FAILURE
+    fi
+}
+
+_check_backup_dirs() {
+    local backup_dir
+    for backup_dir in $(get_backup_dirs)
+    do
+        if ! _is_writable_directory "$backup_dir"; then
+            die "Config is invalid: '$backup_dir' is not writable directory" $EXIT_FAILURE
+        fi
+    done
+}
+
+sync_root_with() {
+    # rsync -avu --delete "$ROOT_BACKUP_DIRECTORY/" "$1"
+    rsync -avu "$ROOT_BACKUP_DIRECTORY/" "$1"
+}
+
+cmd_sync_all() {
+    local skip_missing=false
+    if [[ " $* " =~ " --skip-missing " ]] || [[ " $* " =~ " -s " ]]; then
+        skip_missing=true
+    fi
+
+    if ! $skip_missing; then
+        _check_backup_dirs
+    fi
+
+    local backup_dir
+    for backup_dir in $(get_backup_dirs)
+    do
+        if ! _is_writable_directory "$backup_dir"; then
+            if $skip_missing; then
+                continue
+            fi
+        fi
+
+        sync_root_with "$backup_dir"
+        echo "Synced root directory with '$backup_dir'"
+    done
+}
+
+
+main() {
+    check_configfile
+    load_config
+    check_config
+
+    cmd_sync_all "$@"
+}
+
+main "$@"
+
+exit $EXIT_SUCCESS
