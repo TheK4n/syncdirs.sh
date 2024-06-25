@@ -89,23 +89,23 @@ sync_root_with() {
 
 cmd_sync_all() {
     local skip_missing=false
-
     if [[ " $* " =~ " --skip-missing " ]] || [[ " $* " =~ " -s " ]]; then
         skip_missing=true
     else
         _check_backup_dirs
     fi
 
-    for i in $(get_backup_dirs)
+    local backup_dir
+    for backup_dir in $(get_backup_dirs)
     do
-        if ! _is_writable_directory "$i"; then
+        if ! _is_writable_directory "$backup_dir"; then
             if $skip_missing; then
                 continue
             fi
         fi
 
-        sync_root_with "$i"
-        echo "Synced root directory with '$i'"
+        sync_root_with "$backup_dir"
+        echo "Synced root directory with '$backup_dir'"
     done
 }
 
