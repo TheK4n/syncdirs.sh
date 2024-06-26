@@ -77,20 +77,28 @@ _check_backup_dirs() {
     for backup_dir in $(get_backup_dirs)
     do
         if ! _is_writable_directory "$backup_dir"; then
-            die "Config is invalid: '$backup_dir' is not writable directory" $EXIT_FAILURE
+            die "Config is invalid: '$backup_dir' is not writable directory, use --skip-missing to skip" $EXIT_FAILURE
         fi
     done
 }
 
-sync_root_with() {
-    # rsync -avu --delete "$ROOT_BACKUP_DIRECTORY/" "$1"
-    rsync -avu "$ROOT_BACKUP_DIRECTORY/" "$1"
+sync_root_directory_with() {
+    rsync -au "$ROOT_BACKUP_DIRECTORY/" "$1"
+}
+
+syncdelete_root_directory_with() {
+    rsync -au --delete "$ROOT_BACKUP_DIRECTORY/" "$1"
 }
 
 cmd_sync_all() {
     local skip_missing=false
     if [[ " $* " =~ " --skip-missing " ]] || [[ " $* " =~ " -s " ]]; then
         skip_missing=true
+    fi
+
+    local delete_not_existing_from_target=false
+    if [[ " $* " =~ " --delete " ]] || [[ " $* " =~ " -d " ]]; then
+        delete_not_existing_from_target=true
     fi
 
     if ! $skip_missing; then
@@ -106,7 +114,11 @@ cmd_sync_all() {
             fi
         fi
 
-        sync_root_with "$backup_dir"
+        if $delete_not_existing_from_target; then
+            syncdelete_root_directory_with "$backup_dir"
+        else
+            sync_root_directory_with "$backup_dir"
+        fi
         echo "Synced root directory with '$backup_dir'"
     done
 }
