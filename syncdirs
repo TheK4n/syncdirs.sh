@@ -5,7 +5,7 @@ set -ueo pipefail
 shopt -s nullglob
 
 : "${XDG_CONFIG_HOME:=$HOME/.config}"
-readonly DEFAULT_CONFIGFILE="$XDG_CONFIG_HOME/bkp/config"
+readonly DEFAULT_CONFIGFILE="$XDG_CONFIG_HOME/syncdirs/config"
 
 readonly CONFIGFILE="${CONFIGFILE:=$DEFAULT_CONFIGFILE}"
 
