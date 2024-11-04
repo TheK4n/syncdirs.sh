@@ -1,8 +1,7 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 
-set -ueo pipefail
-shopt -s nullglob
+set -ue
 
 : "${XDG_CONFIG_HOME:=$HOME/.config}"
 readonly DEFAULT_CONFIGFILE="$XDG_CONFIG_HOME/syncdirs/config"
@@ -14,26 +13,25 @@ readonly EXIT_FAILURE=1
 
 
 die() {
-    local program_name
     program_name="$(basename "$0")"
     echo "$program_name: Error: $1" 1>&2
     exit "${2:-$EXIT_FAILURE}"
 }
 
 _is_variable_set() {
-    [[ -v "$1" ]]
+    [ -n "${1+x}" ]
 }
 
 _is_directory() {
-    [[ -d "$1" ]]
+    [ -d "$1" ]
 }
 
 _is_readable() {
-    [[ -r "$1" ]]
+    [ -r "$1" ]
 }
 
 _is_writable() {
-    [[ -w "$1" ]]
+    [ -w "$1" ]
 }
 
 _is_readable_directory() {
@@ -51,11 +49,11 @@ check_configfile() {
 }
 
 load_config() {
-    source "$CONFIGFILE"
+    . "${CONFIGFILE}"
 }
 
 get_backup_dirs() {
-    echo "${BACKUP_DIRECTORIES[*]}"
+    echo "${BACKUP_DIRECTORIES}"
 }
 
 check_config() {
@@ -67,37 +65,41 @@ check_config() {
         die "Config is invalid: variable BACKUP_DIRECTORIES not defined" $EXIT_FAILURE
     fi
 
-    if ! _is_readable_directory "$ROOT_BACKUP_DIRECTORY"; then
-        die "Config is invalid: ROOT_BACKUP_DIRECTORY(=$ROOT_BACKUP_DIRECTORY) is not a readable directory" $EXIT_FAILURE
+    if ! _is_readable_directory "${ROOT_BACKUP_DIRECTORY}"; then
+        die "Config is invalid: ROOT_BACKUP_DIRECTORY(=${ROOT_BACKUP_DIRECTORY}) is not a readable directory" $EXIT_FAILURE
     fi
 }
 
 _check_backup_dirs() {
-    local backup_dir
     for backup_dir in $(get_backup_dirs)
     do
-        if ! _is_writable_directory "$backup_dir"; then
-            die "Config is invalid: '$backup_dir' is not writable directory, use --skip-missing to skip" $EXIT_FAILURE
+        if ! _is_writable_directory "${backup_dir}"; then
+            die "Config is invalid: '${backup_dir}' is not writable directory, use --skip-missing to skip" $EXIT_FAILURE
         fi
     done
 }
 
 sync_root_directory_with() {
-    rsync -au "$ROOT_BACKUP_DIRECTORY/" "$1"
+    rsync -au "${ROOT_BACKUP_DIRECTORY}/" "$1"
 }
 
 syncdelete_root_directory_with() {
-    rsync -au --delete "$ROOT_BACKUP_DIRECTORY/" "$1"
+    rsync -au --delete "${ROOT_BACKUP_DIRECTORY}/" "$1"
+}
+
+contains() {
+    p="${1}"; shift
+    echo " $* " | grep " ${p} " 1>/dev/null
 }
 
 cmd_sync_all() {
-    local skip_missing=false
-    if [[ " $* " =~ " --skip-missing " ]] || [[ " $* " =~ " -s " ]]; then
+    skip_missing=false
+    if contains "--skip-missing" "$*" || contains "-s" "$*"; then
         skip_missing=true
     fi
 
-    local delete_not_existing_from_target=false
-    if [[ " $* " =~ " --delete " ]] || [[ " $* " =~ " -d " ]]; then
+    delete_not_existing_from_target=false
+    if contains "--delete" "$*" || contains "-d" "$*"; then
         delete_not_existing_from_target=true
     fi
 
@@ -105,7 +107,6 @@ cmd_sync_all() {
         _check_backup_dirs
     fi
 
-    local backup_dir
     for backup_dir in $(get_backup_dirs)
     do
         if ! _is_writable_directory "$backup_dir"; then
