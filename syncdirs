@@ -3,10 +3,10 @@
 
 set -ue
 
-: "${XDG_CONFIG_HOME:=$HOME/.config}"
-readonly DEFAULT_CONFIGFILE="$XDG_CONFIG_HOME/syncdirs/config"
+: "${XDG_CONFIG_HOME:="${HOME}/.config"}"
+readonly DEFAULT_CONFIGFILE="${XDG_CONFIG_HOME}/syncdirs/config"
 
-readonly CONFIGFILE="${CONFIGFILE:=$DEFAULT_CONFIGFILE}"
+readonly CONFIGFILE="${CONFIGFILE:="$DEFAULT_CONFIGFILE"}"
 
 readonly EXIT_SUCCESS=0
 readonly EXIT_FAILURE=1
@@ -14,8 +14,8 @@ readonly EXIT_FAILURE=1
 
 die() {
     program_name="$(basename "$0")"
-    echo "$program_name: Error: $1" 1>&2
-    exit "${2:-$EXIT_FAILURE}"
+    echo "${program_name}: Error: $1" 1>&2
+    exit "${2:-"$EXIT_FAILURE"}"
 }
 
 _is_variable_set() {
@@ -44,7 +44,7 @@ _is_writable_directory() {
 
 check_configfile() {
     if ! _is_readable "$CONFIGFILE"; then
-        die "CONFIGFILE(=$CONFIGFILE) not found or not readable" $EXIT_FAILURE
+        die "CONFIGFILE(=${CONFIGFILE}) not found or not readable" "$EXIT_FAILURE"
     fi
 }
 
@@ -58,15 +58,15 @@ get_backup_dirs() {
 
 check_config() {
     if ! _is_variable_set "ROOT_BACKUP_DIRECTORY"; then
-        die "Config is invalid: variable ROOT_BACKUP_DIRECTORY not defined" $EXIT_FAILURE
+        die "Config is invalid: variable ROOT_BACKUP_DIRECTORY not defined" "$EXIT_FAILURE"
     fi
 
     if ! _is_variable_set "BACKUP_DIRECTORIES"; then
-        die "Config is invalid: variable BACKUP_DIRECTORIES not defined" $EXIT_FAILURE
+        die "Config is invalid: variable BACKUP_DIRECTORIES not defined" "$EXIT_FAILURE"
     fi
 
     if ! _is_readable_directory "${ROOT_BACKUP_DIRECTORY}"; then
-        die "Config is invalid: ROOT_BACKUP_DIRECTORY(=${ROOT_BACKUP_DIRECTORY}) is not a readable directory" $EXIT_FAILURE
+        die "Config is invalid: ROOT_BACKUP_DIRECTORY(=${ROOT_BACKUP_DIRECTORY}) is not a readable directory" "$EXIT_FAILURE"
     fi
 }
 
@@ -74,7 +74,7 @@ _check_backup_dirs() {
     for backup_dir in $(get_backup_dirs)
     do
         if ! _is_writable_directory "${backup_dir}"; then
-            die "Config is invalid: '${backup_dir}' is not writable directory, use --skip-missing to skip" $EXIT_FAILURE
+            die "Config is invalid: '${backup_dir}' is not writable directory, use --skip-missing to skip" "$EXIT_FAILURE"
         fi
     done
 }
@@ -135,4 +135,4 @@ main() {
 
 main "$@"
 
-exit $EXIT_SUCCESS
+exit "$EXIT_SUCCESS"
