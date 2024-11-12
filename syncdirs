@@ -6,16 +6,16 @@ set -ue
 : "${XDG_CONFIG_HOME:="${HOME}/.config"}"
 readonly DEFAULT_CONFIGFILE="${XDG_CONFIG_HOME}/syncdirs/config"
 
-readonly CONFIGFILE="${CONFIGFILE:="$DEFAULT_CONFIGFILE"}"
+readonly CONFIGFILE="${CONFIGFILE:="${DEFAULT_CONFIGFILE}"}"
 
 readonly EXIT_SUCCESS=0
 readonly EXIT_FAILURE=1
 
 
 die() {
-    program_name="$(basename "$0")"
-    echo "${program_name}: Error: $1" 1>&2
-    exit "${2:-"$EXIT_FAILURE"}"
+    program_name="$(basename "${0}")"
+    echo "${program_name}: Error: ${1}" 1>&2
+    exit "${2:-"${EXIT_FAILURE}"}"
 }
 
 _is_variable_set() {
@@ -23,28 +23,28 @@ _is_variable_set() {
 }
 
 _is_directory() {
-    [ -d "$1" ]
+    [ -d "${1}" ]
 }
 
 _is_readable() {
-    [ -r "$1" ]
+    [ -r "${1}" ]
 }
 
 _is_writable() {
-    [ -w "$1" ]
+    [ -w "${1}" ]
 }
 
 _is_readable_directory() {
-    _is_directory "$1" && _is_readable "$1"
+    _is_directory "${1}" && _is_readable "${1}"
 }
 
 _is_writable_directory() {
-    _is_directory "$1" && _is_writable "$1"
+    _is_directory "${1}" && _is_writable "${1}"
 }
 
 check_configfile() {
-    if ! _is_readable "$CONFIGFILE"; then
-        die "CONFIGFILE(=${CONFIGFILE}) not found or not readable" "$EXIT_FAILURE"
+    if ! _is_readable "${CONFIGFILE}"; then
+        die "CONFIGFILE(=${CONFIGFILE}) not found or not readable" "${EXIT_FAILURE}"
     fi
 }
 
@@ -58,15 +58,15 @@ get_backup_dirs() {
 
 check_config() {
     if ! _is_variable_set "ROOT_BACKUP_DIRECTORY"; then
-        die "Config is invalid: variable ROOT_BACKUP_DIRECTORY not defined" "$EXIT_FAILURE"
+        die "Config is invalid: variable ROOT_BACKUP_DIRECTORY not defined" "${EXIT_FAILURE}"
     fi
 
     if ! _is_variable_set "BACKUP_DIRECTORIES"; then
-        die "Config is invalid: variable BACKUP_DIRECTORIES not defined" "$EXIT_FAILURE"
+        die "Config is invalid: variable BACKUP_DIRECTORIES not defined" "${EXIT_FAILURE}"
     fi
 
     if ! _is_readable_directory "${ROOT_BACKUP_DIRECTORY}"; then
-        die "Config is invalid: ROOT_BACKUP_DIRECTORY(=${ROOT_BACKUP_DIRECTORY}) is not a readable directory" "$EXIT_FAILURE"
+        die "Config is invalid: ROOT_BACKUP_DIRECTORY(=${ROOT_BACKUP_DIRECTORY}) is not a readable directory" "${EXIT_FAILURE}"
     fi
 }
 
@@ -74,17 +74,17 @@ _check_backup_dirs() {
     for backup_dir in $(get_backup_dirs)
     do
         if ! _is_writable_directory "${backup_dir}"; then
-            die "Config is invalid: '${backup_dir}' is not writable directory, use --skip-missing to skip" "$EXIT_FAILURE"
+            die "Config is invalid: '${backup_dir}' is not writable directory, use --skip-missing to skip" "${EXIT_FAILURE}"
         fi
     done
 }
 
 sync_root_directory_with() {
-    rsync -au "${ROOT_BACKUP_DIRECTORY}/" "$1"
+    rsync -au "${ROOT_BACKUP_DIRECTORY}/" "${1}"
 }
 
 syncdelete_root_directory_with() {
-    rsync -au --delete "${ROOT_BACKUP_DIRECTORY}/" "$1"
+    rsync -au --delete "${ROOT_BACKUP_DIRECTORY}/" "${1}"
 }
 
 contains() {
@@ -103,24 +103,24 @@ cmd_sync_all() {
         delete_not_existing_from_target=true
     fi
 
-    if ! $skip_missing; then
+    if ! ${skip_missing}; then
         _check_backup_dirs
     fi
 
     for backup_dir in $(get_backup_dirs)
     do
-        if ! _is_writable_directory "$backup_dir"; then
-            if $skip_missing; then
+        if ! _is_writable_directory "${backup_dir}"; then
+            if ${skip_missing}; then
                 continue
             fi
         fi
 
-        if $delete_not_existing_from_target; then
-            syncdelete_root_directory_with "$backup_dir"
+        if ${delete_not_existing_from_target}; then
+            syncdelete_root_directory_with "${backup_dir}"
         else
-            sync_root_directory_with "$backup_dir"
+            sync_root_directory_with "${backup_dir}"
         fi
-        echo "Synced root directory with '$backup_dir'"
+        echo "Synced root directory with '${backup_dir}'"
     done
 }
 
@@ -135,4 +135,4 @@ main() {
 
 main "$@"
 
-exit "$EXIT_SUCCESS"
+exit "${EXIT_SUCCESS}"
